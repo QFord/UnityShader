@@ -1,43 +1,44 @@
-﻿// Upgrade NOTE: replaced 'PositionFog()' with multiply of UNITY_MATRIX_MVP by position
-// Upgrade NOTE: replaced 'V2F_POS_FOG' with 'float4 pos : SV_POSITION'
-// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-
-Shader "WindowGlass"
+﻿Shader "FX/MirrorReflection"
 {
-	Properties{
-		_MainTint("Main Color", Color) = (1, 1, 1, 1)
-		_AlphaVal("Alpha", Range(0, 1)) = 0.1
-		_CubeMap("Sky Box", CUBE) = ""{}
-	_ReflPower("Reflect Power", Range(0, 1)) = 1
-		_FresnelPower("Fresnel Power", Range(0.1, 5)) = 2
+	Properties
+	{
+		_MainTex("Base (RGB)", 2D) = "white" {}
+	[HideInInspector] _ReflectionTex("", 2D) = "white" {}
 	}
-		SubShader{
-		Tags{ "Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent" }
-		LOD 200
+		SubShader
+	{
+		Tags{ "RenderType" = "Opaque" }
+		LOD 100
 
+		Pass{
 		CGPROGRAM
-#pragma surface surf BlinnPhong alpha
-
-		fixed4 _MainTint;
-	float _AlphaVal;
-	samplerCUBE _CubeMap;
-	float _ReflPower;
-	float _FresnelPower;
-
-	struct Input {
-		float3 worldRefl;
-		float3 viewDir;
+#pragma vertex vert
+#pragma fragment frag
+#include "UnityCG.cginc"
+		struct v2f
+	{
+		float2 uv : TEXCOORD0;
+		float4 refl : TEXCOORD1;
+		float4 pos : SV_POSITION;
 	};
-
-	void surf(Input IN, inout SurfaceOutput o) {
-		float rim = 1.0 - max(0, dot(o.Normal, normalize(IN.viewDir)));
-		rim = pow(rim, _FresnelPower);
-		half4 s = texCUBE(_CubeMap, IN.worldRefl);
-		o.Albedo = _MainTint.rgb;
-		o.Emission = s.rgb * _ReflPower * rim;
-		o.Alpha = _AlphaVal;
+	float4 _MainTex_ST;
+	v2f vert(float4 pos : POSITION, float2 uv : TEXCOORD0)
+	{
+		v2f o;
+		o.pos = mul(UNITY_MATRIX_MVP, pos);
+		o.uv = TRANSFORM_TEX(uv, _MainTex);
+		o.refl = ComputeScreenPos(o.pos);
+		return o;
 	}
-	ENDCG
+	sampler2D _MainTex;
+	sampler2D _ReflectionTex;
+	fixed4 frag(v2f i) : SV_Target
+	{
+		fixed4 tex = tex2D(_MainTex, i.uv);
+	fixed4 refl = tex2Dproj(_ReflectionTex, UNITY_PROJ_COORD(i.refl));
+	return tex * refl;
 	}
-		FallBack "Diffuse"
+		ENDCG
+	}
+	}
 }
