@@ -4,3 +4,5 @@
 https://io6sf8qc8i.feishu.cn/wiki/wikcnTw90mNTdKAiU6A8hTc6FCe?from=from_copylink
 
 https://en.wikibooks.org/wiki/Cg_Programming/Unity/
+
+gitigonre设置：https://blog.csdn.net/sayUonly/article/details/109527311
